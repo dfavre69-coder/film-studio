@@ -19,7 +19,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from .video import ffmpeg
+from .video import ffmpeg, ligne_concat
 
 POLICE_FOURNIE = Path(__file__).parent / "assets" / "polices" / "FiraSans-Black.ttf"
 BLANC = (255, 255, 255, 255)
@@ -159,7 +159,7 @@ def incruster(video: str | Path, entrees: list[tuple[float, float, str]], destin
 
         def ajouter(fichier: Path, d: float):
             if d > 0.001:
-                lignes.append(f"file '{fichier.as_posix()}'\nduration {d:.3f}\n")
+                lignes.append(ligne_concat(fichier) + f"duration {d:.3f}\n")
         for debut, fin, mots, actif in evts:
             debut = max(debut, instant)
             if debut >= duree:
@@ -172,7 +172,7 @@ def incruster(video: str | Path, entrees: list[tuple[float, float, str]], destin
             ajouter(f, fin - debut)
             instant = max(instant, fin)
         ajouter(vide, max(0.05, duree - instant))
-        lignes.append(f"file '{vide.as_posix()}'\n")   # le concat a besoin d'une dernière image
+        lignes.append(ligne_concat(vide))   # le concat a besoin d'une dernière image
         liste = t / "liste.txt"
         liste.write_text("".join(lignes), encoding="utf-8")
         piste = t / "sous_titres.mov"

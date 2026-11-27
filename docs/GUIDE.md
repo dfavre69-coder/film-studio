@@ -139,6 +139,20 @@ Onglet **4. Production** :
 
 Le film arrive dans `export\`, avec ses sous-titres `.srt`, prêts pour YouTube. Vous pouvez arrêter à tout moment : ce qui est fait est enregistré.
 
+**Reprise automatique.** *Tout produire* ne s'arrête pas sur un incident passager. Film Studio attend, puis reprend là où il en était :
+
+| Incident | Reprise |
+|---|---|
+| Quota de ChatGPT atteint | toutes les 15 minutes, jusqu'à 12 heures |
+| ComfyUI qui plante ou manque de mémoire | ComfyUI est redémarré, puis le plan est refait au bout de 30 secondes |
+| Coupure réseau, voix en échec | nouvel essai |
+
+Si le même incident se répète trois fois sans que le film avance, il s'arrête et vous le signale. Le bouton **Arrêter** interrompt aussi l'attente.
+
+Si Film Studio est fermé en pleine production (fermeture, plantage, extinction du PC), la production **reprend toute seule à la prochaine ouverture**. Sous Windows, Film Studio se relance aussi à l'ouverture de session tant qu'une production est en cours.
+
+*Sur un Shadow* : le PC s'éteint automatiquement quand vous fermez la connexion, ou après une longue inactivité. Film Studio reprendra à votre prochaine connexion. Pour qu'un long rendu continue sans vous, il faut l'option « Always On » de Shadow (offres Pro).
+
 ## 7. Conseils pour de bons résultats
 
 - **Une action simple par plan.** Les modèles vidéo ratent les foules, le texte écrit et les mains qui manipulent de petits objets.

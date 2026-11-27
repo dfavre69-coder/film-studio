@@ -159,6 +159,7 @@ class Film:
     short: bool = False           # Short YouTube : vertical, moins de 60 s, accroche et fin en boucle
     sous_titres_incrustes: bool = False   # sous-titres mot à mot dans l'image (indispensable en Short)
     publication: dict = field(default_factory=dict)   # titre, description, hashtags (écrits par l'IA)
+    production_en_cours: bool = False   # « Tout produire » lancé et pas terminé : reprise à la prochaine ouverture
     personnages: list[Personnage] = field(default_factory=list)
     lieux: list[Lieu] = field(default_factory=list)
     plans: list[Plan] = field(default_factory=list)

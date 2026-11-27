@@ -24,6 +24,25 @@ TYPES_IMAGES = [("Images", "*.png *.jpg *.jpeg *.webp"), ("Tous les fichiers", "
 TYPES_AUDIO = [("Audio", "*.wav *.mp3 *.flac *.m4a *.ogg"), ("Tous les fichiers", "*.*")]
 
 
+def relance_au_demarrage(actif: bool) -> None:
+    """Windows : tant qu'une production est en cours, Film Studio se relance à l'ouverture de session
+    (après une extinction du PC, il reprendra la production tout seul)."""
+    if sys.platform != "win32":
+        return
+    dossier = Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
+    lanceur = dossier / "Film Studio (reprise).cmd"
+    try:
+        if not actif:
+            lanceur.unlink(missing_ok=True)
+            return
+        pythonw = Path(sys.executable).with_name("pythonw.exe")
+        racine = Path(__file__).resolve().parents[1]
+        lanceur.write_text(f'@start "" /d "{racine}" "{pythonw}" -m filmstudio\r\n', encoding="ascii",
+                           errors="replace")
+    except OSError:
+        pass
+
+
 def ouvrir_fichier(chemin: str | Path) -> None:
     chemin = str(chemin)
     try:
@@ -85,6 +104,11 @@ class Application(tk.Tk):
             self._charger(Film.ouvrir(a_ouvrir))
         else:
             self._charger(self.film)
+        if self.film.production_en_cours and self.film.dossier:
+            self._journaliser("La production de ce film a été interrompue (fermeture, déconnexion…) : "
+                              "elle reprend automatiquement là où elle s'était arrêtée.")
+            self.v_etat.set("Reprise automatique de la production…")
+            self.after(2500, self._reprendre_production)
         if getattr(self.r, "reprise_whiteboard", False):
             self.r.enregistrer()
             self._journaliser("Réglages de Whiteboard Studio repris : Qwen3-TTS, voix clonée, Ollama, Claude Code "
@@ -730,6 +754,12 @@ class Application(tk.Tk):
         if self.v_production_auto.get():
             self.after(400, self._production_auto)
 
+    def _reprendre_production(self):
+        if self.travail and self.travail.is_alive():
+            return
+        self.nb.select(3)
+        self._lancer_etape("tout")
+
     def _production_auto(self):
         """Du texte jusqu'au film : la production complète démarre dès que le découpage est prêt."""
         if self.travail and self.travail.is_alive():
@@ -975,6 +1005,12 @@ class Application(tk.Tk):
             return prod.tout()
         noms = {"references": "Fiches de référence", "images": "Premières images", "voix": "Voix",
                 "videos": "Rendu des vidéos", "export": "Montage", "tout": "Production complète"}
+        if nom == "tout":
+            self._recuperer(sauver=False)
+            if self._assurer_dossier():
+                self.film.production_en_cours = True   # si Film Studio est fermé en route, on reprendra
+                self.film.enregistrer()
+                relance_au_demarrage(True)
         self._lancer(noms[nom], travail)
 
     def _fiche_publication(self):
@@ -1071,6 +1107,11 @@ class Application(tk.Tk):
     def _fin(self, nom, resultat, erreur, au_retour):
         self.progres.stop()
         self.progres.configure(mode="determinate", value=0)
+        if nom == "Production complète" and self.film.production_en_cours:
+            self.film.production_en_cours = False
+            if self.film.dossier:
+                self.film.enregistrer()
+            relance_au_demarrage(False)
         for b in self.boutons_action:
             b.configure(state="normal")
         self.b_arreter.configure(state="disabled")
@@ -1111,7 +1152,8 @@ class Application(tk.Tk):
 
     def _quitter(self):
         if self.travail and self.travail.is_alive():
-            if not messagebox.askyesno("Quitter", "Un travail est en cours. L'arrêter et quitter ?"):
+            if not messagebox.askyesno("Quitter", "Un travail est en cours. L'arrêter et quitter ?\n"
+                                       "(Une production complète reprendra à la prochaine ouverture.)"):
                 return
             self.arret.set()
             self.travail.join(timeout=5)

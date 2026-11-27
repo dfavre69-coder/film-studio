@@ -58,6 +58,7 @@ class FauxComfy:
         self.liberations = 0
         self.duree_rendu = duree_rendu
         self.object_info: dict = {}
+        self.pannes = 0          # nombre de prochains rendus qui échouent (« out of memory »)
         faux = self
 
         class Gestion(BaseHTTPRequestHandler):
@@ -133,6 +134,12 @@ class FauxComfy:
 
     def _rendre(self, pid: str, graphe: dict):
         time.sleep(self.duree_rendu)
+        if self.pannes > 0:
+            self.pannes -= 1
+            self.historique[pid] = {"outputs": {}, "status": {"status_str": "error", "completed": False, "messages": [
+                ["execution_error", {"node_type": "SamplerCustomAdvanced",
+                                     "exception_message": "torch.OutOfMemoryError: CUDA out of memory."}]]}}
+            return
         image = next((n["inputs"]["image"] for n in graphe.values() if n["class_type"] == "LoadImage"), None)
         sortie = self.dossier / "output"
         if image is None:  # workflow d'images

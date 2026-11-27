@@ -303,3 +303,19 @@ def test_ligne_de_commande_utilise_le_jeton_saisi(tmp_path, monkeypatch):
     assert cli.main(["telecharger-modeles", "--dossier", str(tmp_path / "c")]) == 0
     assert essais == ["", "hf_bon"]
     assert comfy_local.Reglages.charger().hf_jeton == "hf_bon"
+
+
+def test_comfyui_arrete_avant_les_voix(faux, tmp_path):
+    """ComfyUI démarré par Film Studio (LTX en mémoire) est arrêté avant Qwen3-TTS, pas seulement « vidé »."""
+    _fausse_installation(tmp_path / "comfyui")
+    port = _port_libre()
+    url = f"http://127.0.0.1:{port}"
+    r = faux.reglages.copie(comfy_url=url, comfy_dossier=str(tmp_path / "comfyui"))
+    assert comfy_local.GESTIONNAIRE.assurer(r) is True and comfy_local.repond(url)
+    film = film_exemple()
+    film.enregistrer(tmp_path / "film")
+    etats = []
+    b = Production(film, r, etat=etats.append).voix()
+    assert not b.problemes, b.texte()
+    assert not comfy_local.GESTIONNAIRE.actif and not comfy_local.repond(url)
+    assert any("Arrêt de ComfyUI" in e for e in etats)

@@ -83,3 +83,21 @@ def test_short_complet_avec_sous_titres(faux, tmp_path):
         zone = (int(1280 * 0.62) - 150, int(1280 * 0.62) + 150)
         assert _jaune(img, *zone) > 200
         assert _jaune(img, 0, 400) == 0                       # rien en haut de l'image
+
+
+def test_dossier_avec_apostrophe_et_points_de_suspension(faux, tmp_path):
+    """Bug de la 1.4.0 : « 250 ans de révolutions… et l'IA » — l'apostrophe coupait le chemin pour ffmpeg."""
+    comfy.enregistrer_workflow(comfy.Workflow("ltx", "video", WORKFLOW_VIDEO, comfy.deviner_carte(WORKFLOW_VIDEO)))
+    r = faux.reglages.copie(comfy_workflow_video="ltx", moteur_images="manuel")
+    film = film_exemple()
+    film.regler_short()                      # avec les sous-titres incrustés (autre liste concat)
+    film.enregistrer(tmp_path / "250 ans de révolutions… et l'IA")
+    for i in (0, 2):
+        img = film.sous_dossier("images") / f"plan_{i + 1:02d}.png"
+        Image.new("RGB", (720, 1280), (20, 30, 70)).save(img)
+        film.plans[i].image = film.relatif(img)
+    prod = Production(film, r)
+    prod.voix()
+    assert not prod.videos().problemes
+    chemin, b = prod.exporter()
+    assert chemin.exists() and video.infos(chemin)["video"] and "l'IA" in str(chemin)

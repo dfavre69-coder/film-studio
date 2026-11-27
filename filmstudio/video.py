@@ -39,6 +39,13 @@ def ffmpeg(*args: str, delai: float = 1800) -> str:
     return res.stderr
 
 
+def ligne_concat(chemin: str | Path) -> str:
+    """Entrée « file '…' » d'une liste pour le concat de ffmpeg. Une apostrophe dans le chemin
+    (« et l'IA ») s'écrit '\\'' : sinon ffmpeg coupe le chemin."""
+    p = Path(chemin).resolve().as_posix().replace("'", "'\\''")
+    return f"file '{p}'\n"
+
+
 def infos(chemin: str | Path) -> dict:
     """Durée, présence d'une piste audio et d'une piste vidéo (lues par ffmpeg)."""
     res = subprocess.run([chemin_ffmpeg(), "-hide_banner", "-i", str(chemin)], capture_output=True, text=True,
@@ -160,7 +167,7 @@ def assembler(clips: list[Path], destination: str | Path, musique: str | Path | 
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="filmstudio_montage_") as tmp:
         liste = Path(tmp) / "liste.txt"
-        liste.write_text("".join(f"file '{Path(c).resolve().as_posix()}'\n" for c in clips), encoding="utf-8")
+        liste.write_text("".join(ligne_concat(c) for c in clips), encoding="utf-8")
         colle = Path(tmp) / "colle.mp4"
         ffmpeg("-f", "concat", "-safe", "0", "-i", str(liste), "-c", "copy", str(colle))
         if not musique and not normaliser:

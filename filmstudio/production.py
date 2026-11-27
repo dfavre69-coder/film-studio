@@ -21,6 +21,19 @@ ORIENTATION = {"16:9": "paysage 16:9 (1536 × 1024 pixels)", "9:16": "portrait 9
                "1:1": "carré (1024 × 1024 pixels)"}
 
 
+# Attente avant une reprise automatique, en secondes
+DELAIS_REPRISE = {"comfy": 30, "voix": 30}
+REPRISES_SANS_PROGRES = 3        # au-delà, l'incident n'est sans doute pas passager : on s'arrête
+HEURES_MAX_REPRISE = 12          # on n'attend pas un quota au-delà
+
+
+def incident_comfy(message: str) -> bool:
+    """ComfyUI injoignable, planté, trop lent ou à court de mémoire : un redémarrage peut suffire."""
+    m = message.lower()
+    return any(x in m for x in ("ne répond pas", "s'est arrêté", "n'a pas démarré", "trop long", "out of memory",
+                                "outofmemory", "allocat", "cuda error", "connection"))
+
+
 class ErreurProduction(RuntimeError):
     pass
 
@@ -33,10 +46,12 @@ class Arrete(Exception):
 class Bilan:
     faits: list[str] = field(default_factory=list)
     problemes: list[str] = field(default_factory=list)
+    reprise: float = 0       # incident passager : relancer dans ce nombre de secondes (0 = rien à reprendre)
 
     def ajouter(self, autre: "Bilan") -> "Bilan":
         self.faits += autre.faits
         self.problemes += autre.problemes
+        self.reprise = max(self.reprise, autre.reprise)
         return self
 
     def texte(self) -> str:
@@ -203,6 +218,19 @@ class Production:
             self._client = comfy.ClientComfy(self.r.comfy_url)
         return self._client
 
+    def liberer_comfy(self) -> None:
+        """Avant Qwen3-TTS ou Ollama : rend la mémoire prise par ComfyUI.
+
+        LTX-2.5 et son encodeur de texte pèsent plus de 30 Go : même « vidés » de la carte graphique, ils
+        restent en mémoire vive et Windows se met à utiliser le disque (tout devient très lent). Le ComfyUI
+        démarré par Film Studio est donc arrêté (il redémarrera tout seul pour les vidéos) ; celui que
+        vous avez lancé vous-même est seulement prié de vider sa mémoire."""
+        if comfy_local.GESTIONNAIRE.actif:
+            self.etat("Arrêt de ComfyUI pour libérer la mémoire avant les voix…")
+            comfy_local.GESTIONNAIRE.arreter()
+        elif self.r.comfy_liberer_vram:
+            self.client.liberer()
+
     def comfy_pret(self) -> comfy.ClientComfy:
         """ComfyUI prêt à rendre : démarré par Film Studio s'il ne répond pas (si c'est permis)."""
         try:
@@ -278,6 +306,7 @@ class Production:
                                        prompt_image_comfy(self.film, lieu=el), [], "film")
             except forfait.ErreurForfait as e:
                 b.problemes.append(f"{el.nom} : {e}")
+                b.reprise = max(b.reprise, e.reprise)
                 if e.bloquante:
                     break
                 continue
@@ -306,6 +335,7 @@ class Production:
                                    refs, "film")
             except forfait.ErreurForfait as e:
                 b.problemes.append(f"Plan {i + 1} : {e}")
+                b.reprise = max(b.reprise, e.reprise)
                 if e.bloquante:
                     break
                 continue
@@ -325,14 +355,14 @@ class Production:
         indices = list(range(len(self.film.plans))) if indices is None else indices
         if not any(self.film.plans[i].repliques for i in indices):
             return b
-        if self.r.comfy_liberer_vram:
-            self.client.liberer()
+        self.liberer_comfy()
         try:
             problemes = voix.generer_plans(self.film, indices, self.r, self.etat, self.arret, forcer)
         except tts.Annule:
             raise Arrete() from None
         except tts.ErreurTTS as e:
             b.problemes.append(str(e))
+            b.reprise = DELAIS_REPRISE["voix"]
             return b
         self.sauver()
         b.problemes += problemes
@@ -371,6 +401,8 @@ class Production:
             self.comfy_pret()
         except comfy.ErreurComfy as e:
             b.problemes.append(str(e))
+            if incident_comfy(str(e)):
+                b.reprise = DELAIS_REPRISE["comfy"]
             return b
         dossier = self.film.sous_dossier("clips")
         for n, i in enumerate(a_faire, 1):
@@ -397,7 +429,10 @@ class Production:
                 raise Arrete() from None
             except comfy.ErreurComfy as e:
                 b.problemes.append(f"Plan {i + 1} : {e}")
-                if "ne répond pas" in str(e) or "carte" in str(e):
+                if incident_comfy(str(e)):
+                    # ComfyUI planté ou à court de mémoire : on le redémarre et on reprendra ce plan
+                    b.reprise = max(b.reprise, DELAIS_REPRISE["comfy"])
+                    comfy_local.GESTIONNAIRE.arreter()
                     break
                 continue
             finally:
@@ -473,7 +508,52 @@ class Production:
         return destination, b
 
     # -- tout ------------------------------------------------------------------------
-    def tout(self, exporter: bool = True) -> tuple[Path | None, Bilan]:
+    def tout(self, exporter: bool = True, reprise_auto: bool = True) -> tuple[Path | None, Bilan]:
+        """Tout produire. Un incident passager (quota ChatGPT, ComfyUI planté, coupure réseau) n'arrête pas
+        la production : on attend, puis on reprend là où on en était."""
+        debut = time.monotonic()
+        faits: list[str] = []
+        sans_progres = 0
+        while True:
+            avant = self.avancement()
+            chemin, b = self._tout_une_fois(exporter)
+            faits += b.faits
+            if not (reprise_auto and b.reprise and b.problemes):
+                b.faits = faits
+                b.reprise = 0
+                return chemin, b
+            sans_progres = 0 if self.avancement() != avant else sans_progres + 1
+            longue = b.reprise >= 600   # attente d'un quota : pas de limite sur le nombre d'essais
+            if (sans_progres >= REPRISES_SANS_PROGRES and not longue) or \
+                    time.monotonic() - debut + b.reprise > HEURES_MAX_REPRISE * 3600:
+                b.faits = faits
+                b.problemes.append("Reprise automatique abandonnée : l'incident se répète.")
+                b.reprise = 0
+                return chemin, b
+            faits.append(f"Reprise automatique après un incident : {b.problemes[0].splitlines()[0][:140]}")
+            self._patienter(b.reprise, b.problemes[0].splitlines()[0][:80])
+
+    def avancement(self) -> tuple:
+        """Ce qui est déjà fabriqué (pour savoir si une passe a fait avancer le film)."""
+        f = self.film
+
+        def existe(rel):
+            return bool(rel) and f.chemin(rel).exists()
+        return (sum(existe(x.image) for x in f.personnages + f.lieux), sum(existe(p.image) for p in f.plans),
+                sum(existe(p.voix) for p in f.plans), sum(len(p.prises) for p in f.plans))
+
+    def _patienter(self, secondes: float, raison: str) -> None:
+        fin = time.monotonic() + secondes
+        while True:
+            reste = fin - time.monotonic()
+            if reste <= 0:
+                return
+            self.verifier_arret()
+            minutes, sec = divmod(int(reste), 60)
+            self.etat(f"Incident passager ({raison}) : reprise automatique dans {minutes} min {sec:02d} s…")
+            self.arret.wait(min(1.0, reste))
+
+    def _tout_une_fois(self, exporter: bool = True) -> tuple[Path | None, Bilan]:
         b = Bilan()
         if self.r.moteur_images != "manuel":
             b.ajouter(self.references())

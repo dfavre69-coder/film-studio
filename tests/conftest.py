@@ -46,6 +46,11 @@ open(os.environ["FAUX_JOURNAL"], "a", encoding="utf-8").write(json.dumps({{"outi
     "images": images, "cle_api": "OPENAI_API_KEY" in os.environ, "prompt": prompt}}) + "\n")
 if os.environ.get("FAUX_CODEX_LIMITE"):
     print("ERROR: You've hit your usage limit."); sys.exit(1)
+compteur = os.environ.get("FAUX_CODEX_ECHECS")
+restants = int(open(compteur).read() or 0) if compteur and os.path.exists(compteur) else 0
+if restants > 0:
+    open(compteur, "w").write(str(restants - 1))
+    print("ERROR: You've hit your usage limit."); sys.exit(1)
 nom = re.search(r"« ([\w-]+\.png) »", prompt).group(1)
 taille = (1536, 1024) if "paysage" in prompt else (1024, 1536) if "portrait" in prompt else (1024, 1024)
 Image.new("RGB", taille, (200, 170, 60)).save(os.path.join(dossier, nom))

@@ -51,9 +51,10 @@ AIDE_CONNEXION_CODEX = ("Codex n'est pas connecté à votre compte ChatGPT. Ouvr
 class ErreurForfait(RuntimeError):
     """Erreur d'un outil. `bloquante` : inutile de continuer (outil absent, non connecté, limite…)."""
 
-    def __init__(self, message: str, bloquante: bool = False):
+    def __init__(self, message: str, bloquante: bool = False, reprise: float = 0):
         super().__init__(message)
         self.bloquante = bloquante
+        self.reprise = reprise   # incident passager : réessayer après ce nombre de secondes (0 = non)
 
 
 class Arrete(Exception):
@@ -177,7 +178,8 @@ def executer(commande: list[str], entree: str | None = None, dossier: str | Path
             if ecoule > delai:
                 proc.kill()
                 proc.communicate()
-                raise ErreurForfait(f"Pas de réponse au bout de {int(delai // 60)} minutes : abandon.") from None
+                raise ErreurForfait(f"Pas de réponse au bout de {int(delai // 60)} minutes : abandon.",
+                                    reprise=60) from None
             if attente:
                 attente(ecoule)
     return Sortie(proc.returncode, sortie or "", erreurs or "")
@@ -239,7 +241,7 @@ def lire_reponse_claude(sortie: Sortie) -> str:
         raise ErreurForfait(AIDE_CONNEXION_CLAUDE, bloquante=True)
     if _probleme_limite(tout):
         raise ErreurForfait("Limite d'utilisation de votre abonnement Claude atteinte pour le moment. "
-                            "Réessayez plus tard.\n\n" + _fin(tout, 4), bloquante=True)
+                            "Réessayez plus tard.\n\n" + _fin(tout, 4), bloquante=True, reprise=15 * 60)
     raise ErreurForfait("Claude Code a renvoyé une erreur :\n\n" + (_fin(tout) or f"code {sortie.code}"))
 
 
@@ -336,12 +338,13 @@ def generer_image_codex(prompt: str, cle: str, dossier: str | Path, reglages: Re
             if _probleme_limite(tout):
                 raise ErreurForfait("Limite d'utilisation de votre abonnement ChatGPT atteinte pour le moment "
                                     "(la génération d'images la consomme vite). Réessayez plus tard, ou importez "
-                                    "vos propres images.\n\n" + _fin(tout, 4), bloquante=True)
+                                    "vos propres images.\n\n" + _fin(tout, 4), bloquante=True, reprise=15 * 60)
             if "unexpected argument" in tout.lower() or "unrecognized" in tout.lower():
                 raise ErreurForfait("Codex refuse les options de lancement (version différente ?). Vérifiez "
                                     "« Options de Codex » dans les Réglages.\n\n" + _fin(tout, 6), bloquante=True)
             raise ErreurForfait("Codex n'a produit aucune image." + (f"\n\nSa réponse :\n{_fin(tout)}"
-                                                                      if tout.strip() else f" (code {sortie.code})"))
+                                                                      if tout.strip() else f" (code {sortie.code})"),
+                                reprise=120)
         final = dossier / f"{cle}.png"
         with Image.open(image) as img:
             img.load()
