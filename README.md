@@ -13,6 +13,8 @@ Vous écrivez votre idée en quelques phrases. Film Studio s'occupe du reste :
 5. **Les vidéos.** ComfyUI anime chaque plan sur votre carte graphique, avec le modèle de votre choix (LTX-2.5, Wan…). Un plan peut repartir de la dernière image du précédent, pour un enchaînement sans coupure.
 6. **Le montage.** ffmpeg assemble les plans, mixe les voix, le son du modèle et la musique, normalise le volume et écrit les sous-titres (.srt).
 
+**Shorts YouTube.** Cochez « Short YouTube » et vous obtenez une vidéo verticale de moins d'une minute. Le découpage commence par une accroche dès la première seconde et se termine sur une fin qui boucle. Les sous-titres sont incrustés mot à mot dans l'image, car beaucoup regardent les Shorts sans le son. Une **fiche de publication** (titre, description, hashtags) est prête à copier, pour les films comme pour les Shorts.
+
 Rien n'est figé. Chaque plan garde ses prises : vous pouvez en refaire une, choisir la meilleure, corriger une réplique ou remplacer une image. Seul ce qui a changé est refait.
 
 ## Aperçu

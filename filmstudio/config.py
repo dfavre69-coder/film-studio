@@ -80,6 +80,7 @@ class Reglages:
     tts_garder_minutes: int = 5
     # --- Interface --------------------------------------------------------------
     dernier_film: str = ""
+    production_auto: bool = False          # produire tout le film dès que le découpage est écrit
     nb_plans: int = 6
     duree_plan: float = 6.0
 

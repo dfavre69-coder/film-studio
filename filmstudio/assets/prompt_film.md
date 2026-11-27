@@ -24,7 +24,8 @@ Tu es scénariste et réalisateur de courts-métrages d'animation. À partir de 
 - `repliques` : courtes (une à deux phrases par plan, 15 mots au plus chacune), en {{LANGUE}}. `personnage` est le nom exact d'un personnage, ou "Narrateur" pour la voix off. Un plan peut n'avoir aucune réplique.
 - `voix` d'un personnage : une indication en {{LANGUE}} (âge, timbre, débit).
 - Les noms des lieux et des personnages dans les plans reprennent exactement ceux des listes.
-
+- `publication` : de quoi publier la vidéo sur YouTube. `titre` court et accrocheur (60 caractères au plus, sans majuscules partout ni promesse mensongère), `description` de 3 à 5 phrases qui donnent envie de regarder et se terminent par une question au public, `hashtags` : 3 à 5 mots-clés pertinents.
+{{SHORT}}
 ## Réponse
 
 Réponds UNIQUEMENT par un objet JSON valide, sans texte autour, de la forme :
@@ -51,6 +52,11 @@ Réponds UNIQUEMENT par un objet JSON valide, sans texte autour, de la forme :
       "enchainer": false,
       "repliques": [{"personnage": "Lumi", "texte": "Il y a quelqu'un ?"}]
     }
-  ]
+  ],
+  "publication": {
+    "titre": "Elle avait peur du noir… jusqu'à cette nuit",
+    "description": "Une toute petite luciole se perd dans la forêt la nuit. … Et vous, de quoi aviez-vous peur enfant ?",
+    "hashtags": ["animation", "conte", "luciole"]
+  }
 }
 ```

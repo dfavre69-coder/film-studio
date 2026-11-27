@@ -13,6 +13,21 @@ from .projet import NARRATEUR, Film, Lieu, Personnage, Plan, Replique, identifia
 GABARIT = Path(__file__).parent / "assets" / "prompt_film.md"
 
 
+CONSIGNES_SHORT = """
+## C'est un Short YouTube
+
+Il sera vu sur un téléphone, à la verticale, souvent sans le son, au milieu de dizaines d'autres vidéos. Il doit retenir le spectateur dès la première seconde.
+
+- Durée totale : {total} secondes au plus (jamais plus de 58). Plans courts, de 3 à 5 secondes.
+- Plan 1 = l'accroche : une image forte, surprenante ou émouvante dès la première seconde, avec une réplique qui pose une question ou une tension. Jamais d'introduction, de titre ni de présentation.
+- Une seule idée, un seul petit arc : situation, rebondissement, chute. Rythme rapide, pas de temps mort.
+- La fin rejoint le début (même lieu, même cadrage ou même phrase) pour que la vidéo boucle naturellement et soit revue.
+- Cadrage vertical : le sujet au centre de l'image, en plan rapproché ou en gros plan, rien d'important sur les bords ; le tiers bas de l'image reste dégagé (les sous-titres et les boutons de YouTube s'y affichent).
+- Répliques très courtes (10 mots au plus), qui se comprennent aussi lues sans le son.
+- `hashtags` : inclure "Shorts".
+"""
+
+
 class ReponseIllisible(ValueError):
     pass
 
@@ -31,6 +46,7 @@ def construire_prompt(film: Film, pitch: str, nb_plans: int = 6, duree_plan: flo
         "{{STYLE}}": film.style.strip() or "au choix",
         "{{FORMAT}}": {"16:9": "paysage 16:9", "9:16": "vertical 9:16 (format Short)", "1:1": "carré"}.get(
             film.format, film.format),
+        "{{SHORT}}": CONSIGNES_SHORT.format(total=min(55, round(nb_plans * duree_plan))) if film.short else "",
     }
     for cle, val in remplacements.items():
         texte = texte.replace(cle, val)
@@ -163,6 +179,18 @@ def film_depuis_ia(reponse: str, base: Film, duree_plan: float = 6, duree_max: f
                 qui = NARRATEUR
             plan.repliques.append(Replique(qui, _txt(r["texte"])))
         film.plans.append(plan)
+    pub = donnees.get("publication")
+    if isinstance(pub, dict):
+        tags = pub.get("hashtags") or []
+        if isinstance(tags, str):
+            tags = [t for t in re.split(r"[\s,]+", tags) if t]
+        film.publication = {"titre": _txt(pub.get("titre")), "description": _txt(pub.get("description")),
+                            "hashtags": [t.strip().lstrip("#") for t in tags if str(t).strip()][:8]}
+    if film.short:
+        total = sum(p.duree for p in film.plans)
+        if total > 60:
+            remarques.append(f"Short trop long : environ {total:.0f} s prévues (60 s au plus). "
+                             "Raccourcissez des plans ou supprimez-en.")
     for perso in film.personnages:
         if not perso.apparence:
             remarques.append(f"Personnage « {perso.nom} » sans apparence : décrivez-le pour qu'il reste reconnaissable.")

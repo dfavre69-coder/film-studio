@@ -6,6 +6,7 @@ arrêter à tout moment et reprendre plus tard.
 """
 from __future__ import annotations
 
+import re
 import threading
 import time
 from dataclasses import dataclass, field
@@ -149,6 +150,19 @@ def prompt_video(film: Film, plan: Plan) -> str:
         dits = " ".join(f'{r.personnage} says in {film.langue}: "{r.texte}"' for r in plan.repliques)
         morceaux.append(dits)
     return ". ".join(m.strip().rstrip(".") for m in morceaux if m and m.strip()) + "."
+
+
+def fiche_publication(film: Film) -> str:
+    """Titre, description et hashtags prêts à copier (écrits par l'IA avec le découpage)."""
+    pub = film.publication or {}
+    titre = pub.get("titre") or film.titre
+    description = pub.get("description") or film.pitch or ""
+    tags = list(pub.get("hashtags") or ["animation", "IA"])
+    if film.short and not any(t.lower() == "shorts" for t in tags):
+        tags.append("Shorts")
+    hashtags = " ".join("#" + re.sub(r"\s+", "", t.lstrip("#")) for t in tags if t)
+    return (f"TITRE\n{titre}\n\nDESCRIPTION\n{description}\n\n{hashtags}\n\n"
+            "(Ajoutez ici vos liens : chaîne, dépôt GitHub, autres vidéos…)\n")
 
 
 def duree_rendu(film: Film, plan: Plan, r: Reglages) -> float:
@@ -444,7 +458,18 @@ class Production:
             pass
         if srt:
             video.ecrire_srt(srt, destination.with_suffix(".srt"))
+            if self.film.sous_titres_incrustes:
+                self.etat("Montage : sous-titres incrustés mot à mot…")
+                from . import sous_titres
+                temp = destination.with_name(destination.stem + "_st.mp4")
+                sous_titres.incruster(destination, srt, temp, self.film.largeur, self.film.hauteur, self.film.fps, t)
+                temp.replace(destination)
+        fiche = destination.with_name(destination.stem + "_publication.txt")
+        fiche.write_text(fiche_publication(self.film), encoding="utf-8")
         b.faits.append(f"Film exporté : {destination.name} ({int(t // 60)} min {int(t % 60):02d} s)")
+        if self.film.short and t > 60:
+            b.problemes.append(f"Le Short dure {t:.0f} s : YouTube le classera peut-être comme vidéo normale "
+                               "au-delà de 60 s. Raccourcissez des plans.")
         return destination, b
 
     # -- tout ------------------------------------------------------------------------

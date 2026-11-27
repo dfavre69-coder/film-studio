@@ -145,6 +145,9 @@ class Application(tk.Tk):
         self.t_style.cadre.grid(row=3, column=1, sticky="we", pady=(8, 0))
         opt = ttk.Frame(c)
         opt.grid(row=4, column=0, columnspan=2, sticky="w", pady=8)
+        self.v_short = tk.BooleanVar(value=False)
+        ttk.Checkbutton(opt, text="Short YouTube", variable=self.v_short, command=self._basculer_short).pack(
+            side="left", padx=(0, 16))
         ttk.Label(opt, text="Format").pack(side="left")
         self.v_format = tk.StringVar()
         ttk.Combobox(opt, textvariable=self.v_format, values=list(FORMATS), width=6, state="readonly").pack(
@@ -171,6 +174,11 @@ class Application(tk.Tk):
         ttk.Button(ia_, text="Copier le prompt", command=self._copier_prompt).pack(side="left", padx=3)
         ttk.Button(ia_, text="Coller la réponse…", command=lambda: FenetreCollage(self, self._reponse_ia)).pack(
             side="left", padx=3)
+        self.v_production_auto = tk.BooleanVar(value=self.r.production_auto)
+        ttk.Checkbutton(c, text="Puis produire tout le film automatiquement (fiches, images, voix, vidéos, montage)",
+                        variable=self.v_production_auto,
+                        command=lambda: self._sauver_reglages(production_auto=bool(self.v_production_auto.get()))
+                        ).grid(row=6, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
     # -- 2. Personnages et lieux ----------------------------------------------------------
     def _onglet_elements(self):
@@ -364,9 +372,13 @@ class Application(tk.Tk):
         ttk.Checkbutton(etapes, text="Tout refaire (nouvelles images et prises)", variable=self.v_refaire).pack(
             side="left", padx=10)
 
+        self.v_incrustes = tk.BooleanVar(value=False)
+        ttk.Checkbutton(opts, text="Sous-titres incrustés dans l'image, mot à mot (conseillé pour les Shorts)",
+                        variable=self.v_incrustes).grid(row=3, column=0, columnspan=5, sticky="w", pady=(4, 0))
         fin = ttk.Frame(c)
         fin.grid(row=2, column=0, sticky="we")
         ttk.Button(fin, text="Regarder le film", command=self._regarder_film).pack(side="left")
+        ttk.Button(fin, text="Fiche de publication", command=self._fiche_publication).pack(side="left", padx=4)
         ttk.Button(fin, text="Ouvrir le dossier d'export", command=lambda: self._ouvrir_dossier("export")).pack(
             side="left", padx=4)
         self.l_resume = ttk.Label(fin, text="")
@@ -391,6 +403,8 @@ class Application(tk.Tk):
         self.v_vol_modele.set(film.volume_modele)
         self.v_musique.set(film.musique)
         self.v_vol_musique.set(film.volume_musique)
+        self.v_short.set(film.short)
+        self.v_incrustes.set(film.sous_titres_incrustes)
         self._rafraichir()
         if film.dossier:
             self._sauver_reglages(dernier_film=str(film.dossier))
@@ -548,6 +562,8 @@ class Application(tk.Tk):
         except (tk.TclError, ValueError):
             pass
         f.musique = self.v_musique.get().strip()
+        f.short = bool(self.v_short.get())
+        f.sous_titres_incrustes = bool(self.v_incrustes.get())
 
     def _recuperer(self, sauver: bool = True):
         """Reporte les formulaires dans le film (et l'enregistre s'il a un dossier)."""
@@ -653,6 +669,21 @@ class Application(tk.Tk):
         return ia.construire_prompt(self.film, self.film.pitch, self.r.nb_plans, self.r.duree_plan,
                                     self.r.duree_max_plan)
 
+    def _basculer_short(self):
+        """Short : vertical, une dizaine de plans de 4 s, sous-titres incrustés."""
+        if self.v_short.get():
+            self.v_format.set("9:16")
+            self.v_nb_plans.set(10)
+            self.v_duree_plan.set(4)
+            self.v_incrustes.set(True)
+            self.v_etat.set("Short : vertical, environ 40 s, accroche dès la 1re seconde, fin en boucle, "
+                            "sous-titres incrustés.")
+        else:
+            self.v_format.set("16:9")
+            self.v_nb_plans.set(max(int(self.v_nb_plans.get() or 6), 6))
+            self.v_duree_plan.set(6)
+            self.v_incrustes.set(False)
+
     def _copier_prompt(self):
         texte = self._prompt()
         self.clipboard_clear()
@@ -694,8 +725,22 @@ class Application(tk.Tk):
         msg = f"Découpage prêt : {len(film.personnages)} personnage(s), {len(film.lieux)} lieu(x), {len(film.plans)} plans."
         self._journaliser(msg + ("\n" + "\n".join("• " + r for r in remarques) if remarques else ""))
         self.v_etat.set(msg)
-        if remarques:
+        if remarques and not self.v_production_auto.get():
             messagebox.showinfo("Découpage", msg + "\n\nÀ vérifier :\n" + "\n".join("• " + r for r in remarques))
+        if self.v_production_auto.get():
+            self.after(400, self._production_auto)
+
+    def _production_auto(self):
+        """Du texte jusqu'au film : la production complète démarre dès que le découpage est prêt."""
+        if self.travail and self.travail.is_alive():
+            self.after(300, self._production_auto)
+            return
+        if not self._assurer_dossier():
+            self.v_etat.set("Production automatique annulée : aucun dossier choisi pour le film.")
+            return
+        self.nb.select(3)
+        self._journaliser("Production automatique : le découpage est écrit, le film se fabrique.")
+        self._lancer_etape("tout")
 
     # =========================================================================
     # Personnages et lieux
@@ -931,6 +976,28 @@ class Application(tk.Tk):
         noms = {"references": "Fiches de référence", "images": "Premières images", "voix": "Voix",
                 "videos": "Rendu des vidéos", "export": "Montage", "tout": "Production complète"}
         self._lancer(noms[nom], travail)
+
+    def _fiche_publication(self):
+        """Titre, description et hashtags (écrits par l'IA) dans une petite fenêtre, avec copie."""
+        from .fenetres import zone_texte
+        from .production import fiche_publication
+        self._recuperer()
+        texte = fiche_publication(self.film)
+        fen = tk.Toplevel(self)
+        fen.title("Fiche de publication")
+        fen.transient(self)
+        t = zone_texte(fen, 14, 80)
+        t.cadre.pack(fill="both", expand=True, padx=10, pady=10)
+        ecrire(t, texte)
+        b = ttk.Frame(fen, padding=(10, 0, 10, 10))
+        b.pack(fill="x")
+
+        def copier():
+            self.clipboard_clear()
+            self.clipboard_append(lire(t))
+            self.v_etat.set("Fiche de publication copiée.")
+        ttk.Button(b, text="Copier", command=copier).pack(side="right")
+        ttk.Button(b, text="Fermer", command=fen.destroy).pack(side="right", padx=6)
 
     def _regarder_film(self):
         if not self.film.dossier:

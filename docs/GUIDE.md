@@ -9,6 +9,7 @@
 5. [Les plans](#5-les-plans)
 6. [Produire et monter](#6-produire-et-monter)
 7. [Conseils pour de bons résultats](#7-conseils-pour-de-bons-résultats)
+8. [Faire un Short](#8-faire-un-short)
 8. [Licences des modèles](#licences-des-modèles)
 9. [En cas de problème](#en-cas-de-problème)
 
@@ -94,6 +95,8 @@ Onglet **1. Histoire** :
 
 Cliquez ensuite sur **Écrire le découpage**. Avec **Copier-coller**, le prompt part dans le presse-papiers : collez-le dans l'IA de votre choix, puis cliquez sur **Coller la réponse…**.
 
+**Du texte jusqu'au film en un clic.** Cochez **Puis produire tout le film automatiquement** : dès que le découpage est écrit, Film Studio enchaîne les fiches, les premières images, les voix, les vidéos et le montage, sans attendre. Pour un premier essai, il vaut mieux laisser la case décochée et relire le découpage et les images avant de lancer les vidéos.
+
 Film Studio vérifie la réponse : il ajoute un lieu oublié et rattache au narrateur une réplique sans personnage. Il vous signale tout ce qu'il a corrigé.
 
 ## 4. Personnages et lieux
@@ -143,6 +146,27 @@ Le film arrive dans `export\`, avec ses sous-titres `.srt`, prêts pour YouTube.
 - **Relisez la première image avant de rendre la vidéo.** Une image ratée donne une vidéo ratée, et un rendu coûte bien plus cher qu'une image.
 - **Les voix ne sont pas synchronisées sur les lèvres.** Préférez des plans où le personnage est de dos, de loin, ou réagit pendant que la voix parle.
 - Si un plan est raté, faites une **nouvelle prise** : la graine change à chaque fois.
+
+## 8. Faire un Short
+
+Dans l'onglet **Histoire**, cochez **Short YouTube**. Film Studio règle alors pour vous :
+
+- le format vertical 9:16 ;
+- une dizaine de plans de 4 secondes, soit environ 40 secondes ;
+- les sous-titres incrustés.
+
+Le découpage suit des consignes propres aux Shorts :
+
+- **Accroche dès la première seconde** : une image forte et une réplique qui pose une question, sans introduction.
+- **Une seule idée**, un rythme rapide, une chute.
+- **Une fin qui boucle sur le début**, pour que la vidéo soit revue.
+- **Un cadrage vertical** : le sujet au centre, en gros plan, et le tiers bas de l'image dégagé.
+
+**Sous-titres incrustés** (onglet Production). Les répliques s'affichent mot à mot, en gros, et le mot prononcé passe en jaune. Ils sont placés dans la zone sûre des Shorts, au-dessus du titre et des boutons de YouTube. Vous pouvez aussi les activer pour un film normal. Le fichier `.srt` est toujours produit à côté.
+
+**Fiche de publication** (bouton dans l'onglet Production). Claude écrit avec le découpage un titre court, une description qui finit par une question au public, et des hashtags (dont #Shorts). La fiche est aussi enregistrée à côté du film dans `export\`, sous le nom `…_publication.txt`. Ajoutez-y vos liens.
+
+Au-delà de 60 secondes, Film Studio vous prévient : YouTube pourrait ne pas traiter la vidéo comme un Short.
 
 ## Licences des modèles
 

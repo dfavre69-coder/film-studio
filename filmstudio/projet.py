@@ -156,6 +156,9 @@ class Film:
     volume_musique: float = 0.15
     negatif: str = ("blurry, low quality, distorted face, deformed hands, extra limbs, text, subtitles, "
                     "watermark, logo, flicker")
+    short: bool = False           # Short YouTube : vertical, moins de 60 s, accroche et fin en boucle
+    sous_titres_incrustes: bool = False   # sous-titres mot à mot dans l'image (indispensable en Short)
+    publication: dict = field(default_factory=dict)   # titre, description, hashtags (écrits par l'IA)
     personnages: list[Personnage] = field(default_factory=list)
     lieux: list[Lieu] = field(default_factory=list)
     plans: list[Plan] = field(default_factory=list)
@@ -200,6 +203,12 @@ class Film:
             if l.id == cle or l.nom == cle or l.id == cle_n or identifiant(l.nom) == cle_n:
                 return l
         return None
+
+    def regler_short(self, actif: bool = True) -> None:
+        self.short = actif
+        if actif:
+            self.regler_format("9:16")
+            self.sous_titres_incrustes = True
 
     def regler_format(self, fmt: str) -> None:
         self.format = fmt
