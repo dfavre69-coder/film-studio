@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "film-studio"
-version = "1.2.2"
+version = "1.2.3"
 description = "Courts-métrages d'animation par IA, en local : ComfyUI, Claude, ChatGPT et Qwen3-TTS"
 readme = "README.md"
 license = { text = "MIT" }

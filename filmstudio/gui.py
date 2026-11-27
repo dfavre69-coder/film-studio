@@ -118,7 +118,7 @@ class Application(tk.Tk):
         self.b_arreter.pack(side="right")
         self.v_etat = tk.StringVar(value="Prêt.")
         ttk.Label(bas, textvariable=self.v_etat).pack(side="left")
-        self.progres = ttk.Progressbar(bas, mode="indeterminate", length=160)
+        self.progres = ttk.Progressbar(bas, mode="determinate", length=160, value=0)
         self.progres.pack(side="right", padx=8)
 
     def _action(self, parent, texte, cmd, **pack):
@@ -961,6 +961,7 @@ class Application(tk.Tk):
         for b in self.boutons_action:
             b.configure(state="disabled")
         self.b_arreter.configure(state="normal")
+        self.progres.configure(mode="indeterminate")
         self.progres.start(12)
         self._journaliser(f"— {nom} —")
         self.v_etat.set(f"{nom}…")
@@ -1002,7 +1003,7 @@ class Application(tk.Tk):
 
     def _fin(self, nom, resultat, erreur, au_retour):
         self.progres.stop()
-        self.progres.configure(value=0)
+        self.progres.configure(mode="determinate", value=0)
         for b in self.boutons_action:
             b.configure(state="normal")
         self.b_arreter.configure(state="disabled")

@@ -1,5 +1,7 @@
 # Film Studio
 
+![Film Studio : votre histoire devient un court-métrage d'animation](docs/capture.png)
+
 **Des courts-métrages d'animation par IA, fabriqués sur votre PC, avec des personnages qui restent les mêmes d'un plan à l'autre.**
 
 Vous écrivez votre idée en quelques phrases. Film Studio s'occupe du reste :
@@ -12,6 +14,14 @@ Vous écrivez votre idée en quelques phrases. Film Studio s'occupe du reste :
 6. **Le montage.** ffmpeg assemble les plans, mixe les voix, le son du modèle et la musique, normalise le volume et écrit les sous-titres (.srt).
 
 Rien n'est figé. Chaque plan garde ses prises : vous pouvez en refaire une, choisir la meilleure, corriger une réplique ou remplacer une image. Seul ce qui a changé est refait.
+
+## Aperçu
+
+| Personnages et lieux | Production |
+|---|---|
+| ![Fiches des personnages et des lieux](docs/personnages.png) | ![Fabrication du film, étape par étape](docs/production.png) |
+
+Chaque personnage a sa fiche de référence et peut avoir sa propre voix. Un seul bouton enchaîne les fiches, les premières images, les voix, les vidéos et le montage.
 
 ## Ce qu'il faut
 
