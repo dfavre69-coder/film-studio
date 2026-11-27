@@ -1,0 +1,966 @@
+{
+"LoadImage": {
+"input": {
+"required": {
+"image": [
+[
+"neon_cyborg_portrait.png",
+"exemple.png"
+],
+{
+"image_upload": true
+}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"image"
+]
+},
+"output": [
+"IMAGE",
+"MASK"
+],
+"output_name": [
+"IMAGE",
+"MASK"
+],
+"output_node": false
+},
+"SaveVideo": {
+"input": {
+"required": {
+"video": [
+"VIDEO",
+{}
+],
+"filename_prefix": [
+"STRING",
+{}
+],
+"format": [
+[
+"auto",
+"mp4"
+],
+{}
+],
+"codec": [
+[
+"auto",
+"h264"
+],
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"video",
+"filename_prefix",
+"format",
+"codec"
+]
+},
+"output": [],
+"output_name": [],
+"output_node": true
+},
+"ResolutionSelector": {
+"input": {
+"required": {
+"aspect_ratio": [
+[
+"16:9 (Widescreen)",
+"9:16 (Portrait)"
+],
+{}
+],
+"megapixels": [
+"FLOAT",
+{}
+],
+"multiple_of": [
+"INT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"aspect_ratio",
+"megapixels",
+"multiple_of"
+]
+},
+"output": [
+"INT",
+"INT"
+],
+"output_name": [
+"width",
+"height"
+],
+"output_node": false
+},
+"CLIPLoader": {
+"input": {
+"required": {
+"clip_name": [
+[
+"gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors"
+],
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"clip_name"
+]
+},
+"output": [
+"CLIP"
+],
+"output_name": [
+"CLIP"
+],
+"name": "CLIPLoader",
+"output_node": false
+},
+"TextGenerateLTX2Prompt": {
+"input": {
+"required": {
+"clip": [
+"CLIP",
+{}
+],
+"image": [
+"IMAGE",
+{}
+],
+"video": [
+"IMAGE",
+{}
+],
+"audio": [
+"AUDIO",
+{}
+],
+"prompt": [
+"STRING",
+{
+"multiline": true
+}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"clip",
+"image",
+"video",
+"audio",
+"prompt"
+]
+},
+"output": [
+"STRING"
+],
+"output_name": [
+"generated_text"
+],
+"name": "TextGenerateLTX2Prompt",
+"output_node": false
+},
+"PrimitiveBoolean": {
+"input": {
+"required": {},
+"optional": {}
+},
+"input_order": {
+"required": []
+},
+"output": [
+"BOOLEAN"
+],
+"output_name": [
+"BOOLEAN"
+],
+"name": "PrimitiveBoolean",
+"output_node": false
+},
+"CLIPTextEncode": {
+"input": {
+"required": {
+"text": [
+"STRING",
+{
+"multiline": true
+}
+],
+"clip": [
+"CLIP",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"text",
+"clip"
+]
+},
+"output": [
+"CONDITIONING"
+],
+"output_name": [
+"CONDITIONING"
+],
+"output_node": false
+},
+"PrimitiveStringMultiline": {
+"input": {
+"required": {
+"value": [
+"STRING",
+{
+"multiline": true
+}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"value"
+]
+},
+"output": [
+"STRING"
+],
+"output_name": [
+"STRING"
+],
+"name": "PrimitiveStringMultiline",
+"output_node": false
+},
+"ComfySwitchNode": {
+"input": {
+"required": {
+"on_false": [
+"STRING",
+{}
+],
+"on_true": [
+"STRING",
+{}
+],
+"switch": [
+"BOOLEAN",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"on_false",
+"on_true",
+"switch"
+]
+},
+"output": [
+"STRING"
+],
+"output_name": [
+"output"
+],
+"name": "ComfySwitchNode",
+"output_node": false
+},
+"UNETLoader": {
+"input": {
+"required": {
+"unet_name": [
+[
+"ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors"
+],
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"unet_name"
+]
+},
+"output": [
+"MODEL"
+],
+"output_name": [
+"MODEL"
+],
+"name": "UNETLoader",
+"output_node": false
+},
+"PreviewAny": {
+"input": {
+"required": {
+"source": [
+"*",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"source"
+]
+},
+"output": [
+"STRING"
+],
+"output_name": [
+"STRING"
+],
+"name": "PreviewAny",
+"output_node": true
+},
+"PrimitiveInt": {
+"input": {
+"required": {
+"value": [
+"INT",
+{
+"control_after_generate": true
+}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"value"
+]
+},
+"output": [
+"INT"
+],
+"output_name": [
+"INT"
+],
+"name": "PrimitiveInt",
+"output_node": false
+},
+"LTXVConditioning": {
+"input": {
+"required": {
+"positive": [
+"CONDITIONING",
+{}
+],
+"negative": [
+"CONDITIONING",
+{}
+],
+"frame_rate": [
+"INT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"positive",
+"negative",
+"frame_rate"
+]
+},
+"output": [
+"CONDITIONING",
+"CONDITIONING"
+],
+"output_name": [
+"positive",
+"negative"
+],
+"name": "LTXVConditioning",
+"output_node": false
+},
+"VAELoader": {
+"input": {
+"required": {
+"vae_name": [
+[
+"ltx-2.5-audio-vae-bf16.safetensors"
+],
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"vae_name"
+]
+},
+"output": [
+"VAE"
+],
+"output_name": [
+"VAE"
+],
+"name": "VAELoader",
+"output_node": false
+},
+"KSamplerSelect": {
+"input": {
+"required": {},
+"optional": {}
+},
+"input_order": {
+"required": []
+},
+"output": [
+"SAMPLER"
+],
+"output_name": [
+"SAMPLER"
+],
+"name": "KSamplerSelect",
+"output_node": false
+},
+"RandomNoise": {
+"input": {
+"required": {
+"noise_seed": [
+"INT",
+{
+"control_after_generate": true
+}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"noise_seed"
+]
+},
+"output": [
+"NOISE"
+],
+"output_name": [
+"NOISE"
+],
+"output_node": false
+},
+"ManualSigmas": {
+"input": {
+"required": {},
+"optional": {}
+},
+"input_order": {
+"required": []
+},
+"output": [
+"SIGMAS"
+],
+"output_name": [
+"SIGMAS"
+],
+"name": "ManualSigmas",
+"output_node": false
+},
+"LatentUpscaleModelLoader": {
+"input": {
+"required": {
+"model_name": [
+[
+"ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors"
+],
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"model_name"
+]
+},
+"output": [
+"LATENT_UPSCALE_MODEL"
+],
+"output_name": [
+"LATENT_UPSCALE_MODEL"
+],
+"name": "LatentUpscaleModelLoader",
+"output_node": false
+},
+"LTXVDualCFGGuider": {
+"input": {
+"required": {
+"model": [
+"MODEL",
+{}
+],
+"positive": [
+"CONDITIONING",
+{}
+],
+"negative": [
+"CONDITIONING",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"model",
+"positive",
+"negative"
+]
+},
+"output": [
+"GUIDER"
+],
+"output_name": [
+"GUIDER"
+],
+"name": "LTXVDualCFGGuider",
+"output_node": false
+},
+"SamplerCustomAdvanced": {
+"input": {
+"required": {
+"noise": [
+"NOISE",
+{}
+],
+"guider": [
+"GUIDER",
+{}
+],
+"sampler": [
+"SAMPLER",
+{}
+],
+"sigmas": [
+"SIGMAS",
+{}
+],
+"latent_image": [
+"LATENT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"noise",
+"guider",
+"sampler",
+"sigmas",
+"latent_image"
+]
+},
+"output": [
+"LATENT",
+"LATENT"
+],
+"output_name": [
+"output",
+"denoised_output"
+],
+"name": "SamplerCustomAdvanced",
+"output_node": false
+},
+"LTXVImgToVideoInplace": {
+"input": {
+"required": {
+"vae": [
+"VAE",
+{}
+],
+"image": [
+"IMAGE",
+{}
+],
+"latent": [
+"LATENT",
+{}
+],
+"bypass": [
+"INT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"vae",
+"image",
+"latent",
+"bypass"
+]
+},
+"output": [
+"LATENT"
+],
+"output_name": [
+"latent"
+],
+"name": "LTXVImgToVideoInplace",
+"output_node": false
+},
+"LTXVEmptyLatentAudio": {
+"input": {
+"required": {
+"audio_vae": [
+"VAE",
+{}
+],
+"frames_number": [
+"INT",
+{}
+],
+"frame_rate": [
+"INT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"audio_vae",
+"frames_number",
+"frame_rate"
+]
+},
+"output": [
+"LATENT"
+],
+"output_name": [
+"Latent"
+],
+"name": "LTXVEmptyLatentAudio",
+"output_node": false
+},
+"LTXVSeparateAVLatent": {
+"input": {
+"required": {
+"av_latent": [
+"LATENT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"av_latent"
+]
+},
+"output": [
+"LATENT",
+"LATENT"
+],
+"output_name": [
+"video_latent",
+"audio_latent"
+],
+"name": "LTXVSeparateAVLatent",
+"output_node": false
+},
+"LTXVConcatAVLatent": {
+"input": {
+"required": {
+"video_latent": [
+"LATENT",
+{}
+],
+"audio_latent": [
+"LATENT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"video_latent",
+"audio_latent"
+]
+},
+"output": [
+"LATENT"
+],
+"output_name": [
+"latent"
+],
+"name": "LTXVConcatAVLatent",
+"output_node": false
+},
+"ResizeImageMaskNode": {
+"input": {
+"required": {
+"input": [
+"IMAGE,MASK",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"input"
+]
+},
+"output": [
+"IMAGE,MASK"
+],
+"output_name": [
+"resized"
+],
+"name": "ResizeImageMaskNode",
+"output_node": false
+},
+"ComfyMathExpression": {
+"input": {
+"required": {
+"values.a": [
+"FLOAT,INT,BOOLEAN",
+{}
+],
+"values.b": [
+"FLOAT,INT,BOOLEAN",
+{}
+],
+"values.c": [
+"FLOAT,INT,BOOLEAN",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"values.a",
+"values.b",
+"values.c"
+]
+},
+"output": [
+"FLOAT",
+"INT",
+"BOOLEAN"
+],
+"output_name": [
+"FLOAT",
+"INT",
+"BOOL"
+],
+"name": "ComfyMathExpression",
+"output_node": false
+},
+"LTXVPreprocess": {
+"input": {
+"required": {
+"image": [
+"IMAGE",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"image"
+]
+},
+"output": [
+"IMAGE"
+],
+"output_name": [
+"output_image"
+],
+"name": "LTXVPreprocess",
+"output_node": false
+},
+"EmptyLTXVLatentVideo": {
+"input": {
+"required": {
+"width": [
+"INT",
+{}
+],
+"height": [
+"INT",
+{}
+],
+"length": [
+"INT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"width",
+"height",
+"length"
+]
+},
+"output": [
+"LATENT"
+],
+"output_name": [
+"LATENT"
+],
+"name": "EmptyLTXVLatentVideo",
+"output_node": false
+},
+"LTXVLatentUpsampler": {
+"input": {
+"required": {
+"samples": [
+"LATENT",
+{}
+],
+"upscale_model": [
+"LATENT_UPSCALE_MODEL",
+{}
+],
+"vae": [
+"VAE",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"samples",
+"upscale_model",
+"vae"
+]
+},
+"output": [
+"LATENT"
+],
+"output_name": [
+"LATENT"
+],
+"name": "LTXVLatentUpsampler",
+"output_node": false
+},
+"VAEDecodeTiled": {
+"input": {
+"required": {
+"samples": [
+"LATENT",
+{}
+],
+"vae": [
+"VAE",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"samples",
+"vae"
+]
+},
+"output": [
+"IMAGE"
+],
+"output_name": [
+"IMAGE"
+],
+"name": "VAEDecodeTiled",
+"output_node": false
+},
+"LTXVAudioVAEDecode": {
+"input": {
+"required": {
+"samples": [
+"LATENT",
+{}
+],
+"audio_vae": [
+"VAE",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"samples",
+"audio_vae"
+]
+},
+"output": [
+"AUDIO"
+],
+"output_name": [
+"Audio"
+],
+"name": "LTXVAudioVAEDecode",
+"output_node": false
+},
+"CreateVideo": {
+"input": {
+"required": {
+"images": [
+"IMAGE",
+{}
+],
+"audio": [
+"AUDIO",
+{}
+],
+"fps": [
+"INT",
+{}
+]
+},
+"optional": {}
+},
+"input_order": {
+"required": [
+"images",
+"audio",
+"fps"
+]
+},
+"output": [
+"VIDEO"
+],
+"output_name": [
+"VIDEO"
+],
+"name": "CreateVideo",
+"output_node": false
+}
+}

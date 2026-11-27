@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "film-studio"
+version = "1.2.2"
+description = "Courts-métrages d'animation par IA, en local : ComfyUI, Claude, ChatGPT et Qwen3-TTS"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Denis Favre" }]
+requires-python = ">=3.10"
+dependencies = ["Pillow>=10.0", "imageio-ffmpeg>=0.4.9"]
+
+[project.scripts]
+film-studio = "filmstudio.cli:main"
+
+[tool.setuptools]
+packages = ["filmstudio"]
+
+[tool.setuptools.package-data]
+filmstudio = ["assets/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
