@@ -12,7 +12,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageTk
 
-from . import __version__, comfy, ia, video
+from . import __version__, comfy, ia, styles, video
 from .config import MOTEURS_IMAGES, MOTEURS_SCENARIO, Reglages
 from .demo import film_exemple
 from .fenetres import FenetreCollage, FenetreReglages, ecrire, lire, zone_texte
@@ -164,9 +164,20 @@ class Application(tk.Tk):
             row=1, column=0, columnspan=2, sticky="w", pady=(8, 2))
         self.t_pitch = zone_texte(c, 7)
         self.t_pitch.cadre.grid(row=2, column=0, columnspan=2, sticky="nsew")
-        ttk.Label(c, text="Style visuel (anglais conseillé)").grid(row=3, column=0, sticky="nw", pady=(8, 0))
-        self.t_style = zone_texte(c, 2)
-        self.t_style.cadre.grid(row=3, column=1, sticky="we", pady=(8, 0))
+        ttk.Label(c, text="Style visuel").grid(row=3, column=0, sticky="nw", pady=(8, 0))
+        cadre_style = ttk.Frame(c)
+        cadre_style.grid(row=3, column=1, sticky="we", pady=(8, 0))
+        cadre_style.columnconfigure(0, weight=1)
+        self.v_style_predefini = tk.StringVar(value=styles.PERSONNALISE)
+        cb = ttk.Combobox(cadre_style, textvariable=self.v_style_predefini, state="readonly", height=20,
+                          values=[styles.PERSONNALISE] + styles.libelles(), width=48)
+        cb.grid(row=0, column=0, sticky="w")
+        cb.bind("<<ComboboxSelected>>", lambda e: self._choisir_style())
+        ttk.Label(cadre_style, text="(la description en anglais ci-dessous est répétée dans tous les prompts ; "
+                                    "vous pouvez la modifier)", foreground="#555").grid(row=0, column=1, sticky="w", padx=8)
+        self.t_style = zone_texte(cadre_style, 2)
+        self.t_style.cadre.grid(row=1, column=0, columnspan=2, sticky="we", pady=(4, 0))
+        self.t_style.bind("<KeyRelease>", lambda e: self.v_style_predefini.set(styles.libelle_de(lire(self.t_style))))
         opt = ttk.Frame(c)
         opt.grid(row=4, column=0, columnspan=2, sticky="w", pady=8)
         self.v_short = tk.BooleanVar(value=False)
@@ -420,6 +431,7 @@ class Application(tk.Tk):
         self.v_titre.set(film.titre)
         ecrire(self.t_pitch, film.pitch)
         ecrire(self.t_style, film.style)
+        self.v_style_predefini.set(styles.libelle_de(film.style))
         self.v_format.set(film.format)
         self.v_langue.set(film.langue)
         self.v_mode_voix.set(MODES_VOIX.get(film.mode_voix, MODES_VOIX["tts"]))
@@ -692,6 +704,19 @@ class Application(tk.Tk):
                               duree_plan=float(self.v_duree_plan.get() or 6))
         return ia.construire_prompt(self.film, self.film.pitch, self.r.nb_plans, self.r.duree_plan,
                                     self.r.duree_max_plan)
+
+    def _choisir_style(self):
+        desc = styles.description(self.v_style_predefini.get())
+        if not desc:
+            return
+        deja = any(p.image or p.prises for p in self.film.plans) or any(x.image for x in self.film.personnages)
+        ecrire(self.t_style, desc)
+        self._recuperer()
+        if deja:
+            self.v_etat.set("Style changé : les nouvelles images et vidéos l'utiliseront. Pour tout refaire dans ce "
+                            "style, cochez « Tout refaire » dans l'onglet Production.")
+        else:
+            self.v_etat.set(f"Style choisi : {self.v_style_predefini.get()}")
 
     def _basculer_short(self):
         """Short : vertical, une dizaine de plans de 4 s, sous-titres incrustés."""

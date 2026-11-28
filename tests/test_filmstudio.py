@@ -307,3 +307,17 @@ def test_codex_installe_par_npm_sous_windows(tmp_path, monkeypatch):
     monkeypatch.setattr(forfait.shutil, "which", lambda n: {"codex.cmd": str(npm / "codex.cmd"),
                                                             "codex": str(npm / "codex")}.get(n))
     assert forfait.trouver("codex", windows=True) == str(npm / "codex.cmd")
+
+
+def test_styles_predefinis():
+    from filmstudio import styles
+    assert len(styles.STYLES) >= 30
+    noms = [n for _, n, _ in styles.STYLES]
+    assert len(set(noms)) == len(noms)
+    film = Film()
+    assert styles.libelle_de(film.style) == "Animation · Film d'animation 3D"   # le style par défaut est dans la liste
+    for lib in styles.libelles():
+        assert styles.libelle_de(styles.description(lib)) == lib
+    interdits = ("pixar", "disney", "ghibli", "dreamworks", "lego", "marvel", "miyazaki", "burton", "anderson")
+    assert not any(m in d.lower() for _, _, d in styles.STYLES for m in interdits)
+    assert styles.libelle_de("mon style à moi") == styles.PERSONNALISE

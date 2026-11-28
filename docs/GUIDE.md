@@ -89,7 +89,15 @@ Si vous ne voulez pas passer par ChatGPT, importez aussi un workflow **texte →
 Onglet **1. Histoire** :
 
 - **Votre idée** : quelques phrases suffisent. Indiquez qui, ce qui arrive et la fin.
-- **Style visuel** : de préférence en anglais. Il est répété dans tous les prompts. Par exemple : *3D animated feature film look, soft cinematic lighting*.
+- **Style visuel** : choisissez l'un des 35 styles prédéfinis dans la liste. Il y a 6 familles :
+  - Animation : 3D, pâte à modeler, dessin animé 2D, anime, papier découpé, feutrine, ombres chinoises…
+  - Illustration : aquarelle, huile, livre pour enfants, croquis, craie, estampe…
+  - Bande dessinée : ligne claire, comics, manga, pop art.
+  - Jeu vidéo : pixel art, low poly, cel-shading, diorama.
+  - Cinéma : réaliste, film noir, années 1920, western.
+  - Univers : cyberpunk, science-fiction, steampunk, fantasy, conte gothique, art déco, vitrail.
+
+  La description en anglais s'affiche dessous et reste modifiable. Elle est répétée dans tous les prompts. Changer de style en cours de route ne s'applique qu'aux nouvelles images et vidéos. Pour tout refaire dans le nouveau style, cochez « Tout refaire » dans l'onglet Production.
 - **Format** : 16:9 pour YouTube, 9:16 pour un Short.
 - **Plans** et **secondes par plan** : 6 plans de 6 secondes donnent un film d'environ 40 secondes.
 
